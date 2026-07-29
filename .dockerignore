@@ -1,0 +1,24 @@
+# Dependencies are installed inside the image
+node_modules
+client/node_modules
+
+# The front end is built in the client stage
+client/dist
+
+# Your database and photos belong in a volume, never baked into an image
+data
+
+# Secrets are passed at runtime, not built in
+.env
+
+.git
+.gitignore
+
+# Patterns need ** to match at any depth, not just the context root
+**/*.log
+**/.DS_Store
+
+README.md
+Dockerfile
+.dockerignore
+docker-compose.yml
