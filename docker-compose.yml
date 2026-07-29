@@ -1,0 +1,43 @@
+# Pinned so the project doesn't inherit a name from the enclosing directory
+# (which contains a space) and so resource names stay predictable.
+name: pizza-tracker
+
+services:
+  pizza-tracker:
+    build: .
+    image: pizza-tracker
+    container_name: pizza-tracker
+    restart: unless-stopped
+
+    # Published on loopback only. Point an HTTPS reverse proxy at 127.0.0.1:3001
+    # rather than exposing this port directly — the app expects TLS to be
+    # terminated in front of it, and only marks its session cookie Secure when
+    # the request arrives over HTTPS.
+    #
+    # To reach it from your LAN instead, change this to "3001:3001" and accept
+    # that traffic is unencrypted.
+    ports:
+      - "127.0.0.1:3001:3001"
+
+    # Reads GOOGLE_MAPS_API_KEY and AUTH_PASSWORD_HASH from .env on the host.
+    env_file:
+      - .env
+
+    environment:
+      # Always bind all interfaces inside the container; the ports mapping above
+      # is what actually controls exposure.
+      HOST: 0.0.0.0
+      PORT: 3001
+      # Read the client IP and protocol from a reverse proxy's X-Forwarded-*
+      # headers, so rate limiting and the Secure cookie flag behave correctly.
+      TRUST_PROXY: "1"
+
+    volumes:
+      - pizza-data:/app/data
+
+volumes:
+  pizza-data:
+    # Without an explicit name Compose would create "pizza-tracker_pizza-data",
+    # and every `docker run -v pizza-data:...` backup command would silently
+    # target a different, empty volume.
+    name: pizza-data
