@@ -552,6 +552,9 @@ code {
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
+.switch input:disabled { cursor: default; }
+.switch input:disabled + .switch-track { opacity: 0.4; }
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -596,6 +599,28 @@ textarea {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
+/*
+ * iOS Safari zooms the page whenever a focused field's text is under 16px, and
+ * never zooms back out. Raising the floor to 16px on touch devices prevents it
+ * without resorting to `maximum-scale=1`, which would also block the pinch-zoom
+ * people rely on. Pointer-based devices keep the text-size setting exactly.
+ */
+@media (pointer: coarse) {
+  input[type='text'],
+  input[type='search'],
+  input[type='date'],
+  input[type='password'],
+  input[type='tel'],
+  input[type='url'],
+  input[type='email'],
+  input[type='number'],
+  input:not([type]),
+  select,
+  textarea {
+    font-size: max(16px, calc(15px * var(--font-scale)));
+  }
+}
+
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
@@ -614,6 +639,14 @@ textarea { resize: vertical; }
 }
 
 .row > .field { flex: 1 1 180px; }
+
+/* Always-vertical counterpart to .row, for fields whose controls are too wide
+   to sit side by side on a phone. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
 
 .btn {
   font: inherit;
@@ -652,6 +685,14 @@ textarea { resize: vertical; }
 .btn-sm { padding: 6px 12px; font-size: calc(13px * var(--font-scale)); }
 .btn-icon { padding: 6px 10px; }
 
+.btn-icon-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.btn-icon-text svg { flex: none; }
+
 .link-btn {
   background: none;
   border: none;
@@ -682,6 +723,10 @@ textarea { resize: vertical; }
 }
 
 .segmented button:last-child { border-right: none; }
+
+/* Spread across the full width — used where the control owns its own row. */
+.segmented-fill { display: flex; width: 100%; }
+.segmented-fill button { flex: 1; }
 
 .segmented button.active {
   background: var(--accent);

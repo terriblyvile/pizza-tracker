@@ -40,10 +40,32 @@ export function hostname(url: string | null): string | null {
   }
 }
 
-export function mapsLink(place: Pick<Place, 'name' | 'address' | 'mapsUrl'>): string {
-  if (place.mapsUrl) return place.mapsUrl;
-  const query = [place.name, place.address].filter(Boolean).join(' ');
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+/**
+ * Apple Maps deep link. On iOS and macOS this opens the Maps app directly;
+ * elsewhere maps.apple.com renders the same place in a browser.
+ *
+ * With coordinates, `q` becomes the pin's label rather than a search term,
+ * which puts you on the exact spot instead of whatever the name matches.
+ */
+export function appleMapsLink(place: Pick<Place, 'name' | 'address' | 'lat' | 'lng'>): string {
+  const params = new URLSearchParams();
+
+  if (typeof place.lat === 'number' && typeof place.lng === 'number') {
+    params.set('ll', `${place.lat},${place.lng}`);
+    params.set('q', place.name);
+  } else {
+    params.set('q', [place.name, place.address].filter(Boolean).join(', '));
+  }
+
+  return `https://maps.apple.com/?${params.toString()}`;
+}
+
+/** `tel:` href, or null when there's no dialable number. */
+export function telLink(phone: string | null): string | null {
+  if (!phone) return null;
+  // Keep digits and a leading +; strip the formatting humans read.
+  const cleaned = phone.replace(/[^\d+]/g, '').replace(/(?!^)\+/g, '');
+  return cleaned.replace(/\D/g, '').length >= 5 ? `tel:${cleaned}` : null;
 }
 
 /**

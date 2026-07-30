@@ -9,7 +9,13 @@ import { PlannedTab } from './components/PlannedTab';
 import { SearchPanel } from './components/SearchPanel';
 import { SettingsTab } from './components/SettingsTab';
 import { TabBar, type TabKey } from './components/TabBar';
-import { applySettings, loadSettings, saveSettings, type Settings } from './settings';
+import {
+  applySettings,
+  loadSettings,
+  saveSettings,
+  shouldShowSummary,
+  type Settings,
+} from './settings';
 import type { AppConfig, Place } from './types';
 
 type AuthState = 'checking' | 'signed-out' | 'setup-required' | 'signed-in';
@@ -131,6 +137,8 @@ export function App() {
   }
 
   const openPlace = (placeId: number) => setSelectedId(placeId);
+  const showSummaryFor = (place: Place) =>
+    shouldShowSummary(settings, Boolean(place.notes?.trim()));
 
   return (
     <div className="app">
@@ -180,7 +188,7 @@ export function App() {
           <PlaceList
             places={visited}
             onOpen={openPlace}
-            showSummaries={settings.showSummaries}
+            showSummaryFor={showSummaryFor}
             showRatingFilters
             defaultSort="visit"
             emptyState={
@@ -234,7 +242,7 @@ export function App() {
         )}
 
         {tab === 'planned' && (
-          <PlannedTab places={planned} onOpen={openPlace} showSummaries={settings.showSummaries} />
+          <PlannedTab places={planned} onOpen={openPlace} showSummaryFor={showSummaryFor} />
         )}
 
         {tab === 'settings' && (

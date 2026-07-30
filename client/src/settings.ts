@@ -6,6 +6,8 @@ export interface Settings {
   textSize: TextSizeSetting;
   /** Show the Google synopsis on cards. Off gives a denser list. */
   showSummaries: boolean;
+  /** Once you've written your own note, drop Google's blurb from the card. */
+  hideSummaryWhenNoted: boolean;
   /** Which tab to land on when the app opens. */
   startTab: 'search' | 'visited' | 'planned';
 }
@@ -14,8 +16,15 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   textSize: 'default',
   showSummaries: true,
+  hideSummaryWhenNoted: true,
   startTab: 'visited',
 };
+
+/** Whether a given place should show the Google synopsis on its card. */
+export function shouldShowSummary(settings: Settings, hasNote: boolean): boolean {
+  if (!settings.showSummaries) return false;
+  return !(settings.hideSummaryWhenNoted && hasNote);
+}
 
 export const TEXT_SCALES: Record<TextSizeSetting, number> = {
   small: 0.9,
