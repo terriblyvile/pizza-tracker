@@ -468,6 +468,56 @@ so use the tarball approach there.
 
 ---
 
+### Reaching it from another machine
+
+By default the container publishes to `127.0.0.1:3001`, so it's reachable from
+the server itself and nothing else. Running Docker on a server and browsing from
+a desktop needs one of the following.
+
+#### Option 1 — SSH tunnel (encrypted, no config change)
+
+Best choice for occasional access, and the only one of these that's encrypted
+without extra setup. On your **desktop**:
+
+```bash
+ssh -N -L 3001:127.0.0.1:3001 root@your-server
+```
+
+Leave that running and open **http://localhost:3001** on the desktop. Traffic
+rides inside SSH, so nothing crosses the network in the clear and the server's
+port stays closed. Nothing on the server changes.
+
+#### Option 2 — publish on the LAN (unencrypted)
+
+Add to `.env` on the server:
+
+```
+BIND_ADDRESS=0.0.0.0
+```
+
+Then:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+Now reach it at `http://your-server-ip:3001`.
+
+Understand the tradeoff: **this is plain HTTP.** Your password is sent in the
+clear on login, and the session cookie isn't marked `Secure` because there's no
+HTTPS. Anyone able to watch traffic on that network can read both. Acceptable on
+a trusted home LAN; not acceptable over anything else, and never on the open
+internet.
+
+If the server has a firewall, open the port — e.g. `ufw allow 3001/tcp`.
+
+#### Option 3 — TLS reverse proxy (the real answer)
+
+For anything beyond occasional LAN use, terminate HTTPS in front of the app and
+leave `BIND_ADDRESS` at its default so only the proxy can reach it. See
+[Putting it on the internet](#putting-it-on-the-internet) below — that also
+covers hostnames and certificates.
+
 ### Putting it on the internet
 
 The compose file publishes to `127.0.0.1:3001` deliberately — reachable from the
@@ -578,6 +628,71 @@ Emulated cross-platform builds are noticeably slower than native ones.
 ---
 
 ### Troubleshooting
+
+#### `TLS handshake timeout` pulling the base image
+
+```
+ERROR [internal] load metadata for docker.io/library/node:24-alpine
+failed to do request: Head "https://registry-1.docker.io/v2/library/node/manifests/24-alpine":
+net/http: TLS handshake timeout
+```
+
+Nothing to do with this project — the Docker daemon can't reach Docker Hub.
+Check connectivity first:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://registry-1.docker.io/v2/
+```
+
+`401` is the healthy answer (the registry wants auth for that path). A hang or
+timeout means the network is the problem. In order of likelihood:
+
+- **MTU mismatch.** The classic cause of TLS timeouts specifically, on VPS,
+  VPN-attached and tunnelled hosts. If the host interface MTU is below 1500,
+  Docker's bridge needs to match. Compare them:
+
+  ```bash
+  ip link show | grep -E 'mtu' | grep -E 'eth0|ens|enp|docker0'
+  ```
+
+  If the host is e.g. 1450 and `docker0` is 1500, set the daemon's MTU in
+  `/etc/docker/daemon.json` and restart Docker:
+
+  ```json
+  { "mtu": 1450 }
+  ```
+
+- **DNS.** `getent hosts registry-1.docker.io` should resolve. If not, add a
+  resolver to `/etc/docker/daemon.json`: `{ "dns": ["1.1.1.1", "8.8.8.8"] }`.
+- **A firewall or proxy** blocking outbound 443 to Docker Hub. Behind a proxy,
+  configure it for the *daemon*, not just your shell — `docker build` runs in the
+  daemon, so `HTTPS_PROXY` in your shell has no effect.
+- **Transient.** Simply retry before digging.
+
+**If you've built successfully before**, the base image is already local and you
+can build without contacting the registry at all, using the classic builder:
+
+```bash
+DOCKER_BUILDKIT=0 docker compose build
+```
+
+BuildKit re-resolves image tags against the registry even when the image is
+cached; the classic builder uses the local copy.
+
+#### The log says `.env not found. Continuing without it.`
+
+Versions before this line was removed printed that on every container boot. It
+came from Node inside the container, where `.env` is deliberately absent — it is
+**not** Compose failing to read your host `.env`, and it is not an error.
+
+What actually tells you whether your values arrived is the next line:
+
+| Log line | Meaning |
+| --- | --- |
+| `search: Google Places` | The API key arrived |
+| `search: demo data (no GOOGLE_MAPS_API_KEY set)` | It did not |
+| *(no password warning)* | The password hash arrived |
+| `⚠ No login password set` | It did not |
 
 #### Build fails at the `node:sqlite` check
 
@@ -697,15 +812,55 @@ host can connect. Put a reverse proxy in front, or change the mapping to
 
 ### Compose cheat sheet
 
+> **Run these one at a time.** Steps 1–4 are a setup sequence with a manual step
+> in the middle — pasting the whole list into a shell at once skips it, and you
+> end up with an app that has no key and no password.
+
+**1. Create the config**
+
 ```bash
-cp .env.example .env                                          # 1. config
-docker compose build                                          # 2. build
-docker compose run --rm pizza-tracker npm run hash-password   # 3. password → .env
-docker compose up -d                                          # 4. start
-docker compose ps                                             # health
-docker compose logs -f pizza-tracker                          # logs
-docker compose build && docker compose up -d                  # update
-docker compose down                                           # stop (data kept)
+cp .env.example .env
+```
+
+**2. Add your Google key** — edit `.env` and set `GOOGLE_MAPS_API_KEY=`.
+
+**3. Build**
+
+```bash
+docker compose build
+```
+
+**4. Generate a password hash**
+
+```bash
+docker compose run --rm pizza-tracker npm run hash-password
+```
+
+**5. Paste the printed `AUTH_PASSWORD_HASH=` line into `.env`.** Nothing works
+until you do; the command only prints it.
+
+**6. Start**
+
+```bash
+docker compose up -d
+```
+
+Then, for everyday use:
+
+```bash
+docker compose ps
+```
+
+```bash
+docker compose logs -f pizza-tracker
+```
+
+```bash
+docker compose build && docker compose up -d --force-recreate
+```
+
+```bash
+docker compose down
 ```
 
 ### What's in the image
