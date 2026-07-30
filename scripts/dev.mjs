@@ -7,10 +7,21 @@ import { spawn } from 'node:child_process';
 const procs = [];
 let shuttingDown = false;
 
-function run(name, command, args, color) {
+// Vite proxies /api and /uploads to this port (see client/vite.config.ts), so
+// the two have to agree. Override with API_PORT if 3001 is taken.
+const API_PORT = process.env.API_PORT || '3001';
+
+function run(name, command, args, color, env) {
+  const childEnv = { ...process.env, ...env };
+  // An explicit undefined means "unset this", not "pass the string undefined".
+  for (const key of Object.keys(childEnv)) {
+    if (childEnv[key] === undefined) delete childEnv[key];
+  }
+
   const child = spawn(command, args, {
     stdio: ['ignore', 'pipe', 'pipe'],
     shell: process.platform === 'win32',
+    env: childEnv,
   });
 
   const prefix = `\x1b[${color}m[${name}]\x1b[0m `;
@@ -48,5 +59,18 @@ function shutdown(code = 0) {
 process.on('SIGINT', () => shutdown(0));
 process.on('SIGTERM', () => shutdown(0));
 
-run('api', process.execPath, ['--env-file-if-exists=.env', '--watch', 'server/index.js'], '36');
-run('web', 'npm', ['--prefix', 'client', 'run', 'dev'], '35');
+// PORT is pinned rather than inherited: an ambient PORT (a shell export, or a
+// tool that sets one for the *front end's* port) would otherwise move the API
+// onto Vite's port, leaving Vite to fall back to another one and the proxy
+// pointing at nothing.
+run(
+  'api',
+  process.execPath,
+  ['--env-file-if-exists=.env', '--watch', 'server/index.js'],
+  '36',
+  { PORT: API_PORT, HOST: '127.0.0.1' },
+);
+
+// Vite reads its port from client/vite.config.ts; PORT must not leak in here
+// either, or it would shadow that config in some setups.
+run('web', 'npm', ['--prefix', 'client', 'run', 'dev'], '35', { PORT: undefined });
