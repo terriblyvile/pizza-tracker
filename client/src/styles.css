@@ -76,6 +76,14 @@
   box-sizing: border-box;
 }
 
+/* Nothing should ever scroll sideways. A single element wider than the viewport
+   otherwise lets the whole page slide left and right on a phone. */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -84,6 +92,11 @@ body {
   font-size: calc(15px * var(--font-scale));
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /* Allows scrolling and pinch, but kills double-tap-to-zoom — the one form of
+     zooming iOS Safari does let a page turn off. */
+  touch-action: manipulation;
+  /* Stop iOS inflating text on rotate, which would break the 16px assumption. */
+  -webkit-text-size-adjust: 100%;
 }
 
 h1, h2, h3, h4 {
@@ -619,6 +632,27 @@ textarea {
   textarea {
     font-size: max(16px, calc(15px * var(--font-scale)));
   }
+}
+
+/*
+ * iOS sizes date inputs to their native content and won't shrink them below
+ * that, so raising the font to 16px above pushed the field past the drawer and
+ * made the whole page scroll sideways. min-width:0 lets it shrink; max-width
+ * caps it at the container regardless.
+ */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+input[type='month'],
+input[type='week'] {
+  min-width: 0;
+  max-width: 100%;
+  /* Without this the native picker's intrinsic width wins on iOS. */
+  -webkit-appearance: none;
+  appearance: none;
+  /* appearance:none can collapse an *empty* date field on iOS, so hold the same
+     height as every other input. */
+  min-height: calc(1.5em + 20px);
 }
 
 input:focus-visible,
@@ -1166,6 +1200,10 @@ textarea { resize: vertical; }
 
 .drawer-body {
   overflow-y: auto;
+  /* Belt and braces: even if some future control overflows, the drawer clips it
+     rather than letting the page slide sideways. */
+  overflow-x: hidden;
+  overscroll-behavior: contain;
   padding: 4px 16px 40px;
 }
 

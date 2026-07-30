@@ -2,7 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      maximum-scale/user-scalable suppress zooming. Safari on iOS deliberately
+      ignores them for pinch-zoom (an accessibility protection) but honours them
+      when the app is added to the Home Screen. Focus-zoom is prevented properly
+      by the 16px minimum on form controls in styles.css, and double-tap zoom by
+      `touch-action: manipulation`.
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Pizza Tracker" />
     <meta name="theme-color" content="#c4462b" />
     <title>Pizza Tracker</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
