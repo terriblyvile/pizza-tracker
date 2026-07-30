@@ -579,6 +579,71 @@ Emulated cross-platform builds are noticeably slower than native ones.
 
 ### Troubleshooting
 
+#### `TLS handshake timeout` pulling the base image
+
+```
+ERROR [internal] load metadata for docker.io/library/node:24-alpine
+failed to do request: Head "https://registry-1.docker.io/v2/library/node/manifests/24-alpine":
+net/http: TLS handshake timeout
+```
+
+Nothing to do with this project — the Docker daemon can't reach Docker Hub.
+Check connectivity first:
+
+```bash
+curl -sS -o /dev/null -w '%{http_code}\n' https://registry-1.docker.io/v2/
+```
+
+`401` is the healthy answer (the registry wants auth for that path). A hang or
+timeout means the network is the problem. In order of likelihood:
+
+- **MTU mismatch.** The classic cause of TLS timeouts specifically, on VPS,
+  VPN-attached and tunnelled hosts. If the host interface MTU is below 1500,
+  Docker's bridge needs to match. Compare them:
+
+  ```bash
+  ip link show | grep -E 'mtu' | grep -E 'eth0|ens|enp|docker0'
+  ```
+
+  If the host is e.g. 1450 and `docker0` is 1500, set the daemon's MTU in
+  `/etc/docker/daemon.json` and restart Docker:
+
+  ```json
+  { "mtu": 1450 }
+  ```
+
+- **DNS.** `getent hosts registry-1.docker.io` should resolve. If not, add a
+  resolver to `/etc/docker/daemon.json`: `{ "dns": ["1.1.1.1", "8.8.8.8"] }`.
+- **A firewall or proxy** blocking outbound 443 to Docker Hub. Behind a proxy,
+  configure it for the *daemon*, not just your shell — `docker build` runs in the
+  daemon, so `HTTPS_PROXY` in your shell has no effect.
+- **Transient.** Simply retry before digging.
+
+**If you've built successfully before**, the base image is already local and you
+can build without contacting the registry at all, using the classic builder:
+
+```bash
+DOCKER_BUILDKIT=0 docker compose build
+```
+
+BuildKit re-resolves image tags against the registry even when the image is
+cached; the classic builder uses the local copy.
+
+#### The log says `.env not found. Continuing without it.`
+
+Versions before this line was removed printed that on every container boot. It
+came from Node inside the container, where `.env` is deliberately absent — it is
+**not** Compose failing to read your host `.env`, and it is not an error.
+
+What actually tells you whether your values arrived is the next line:
+
+| Log line | Meaning |
+| --- | --- |
+| `search: Google Places` | The API key arrived |
+| `search: demo data (no GOOGLE_MAPS_API_KEY set)` | It did not |
+| *(no password warning)* | The password hash arrived |
+| `⚠ No login password set` | It did not |
+
 #### Build fails at the `node:sqlite` check
 
 ```
@@ -697,15 +762,55 @@ host can connect. Put a reverse proxy in front, or change the mapping to
 
 ### Compose cheat sheet
 
+> **Run these one at a time.** Steps 1–4 are a setup sequence with a manual step
+> in the middle — pasting the whole list into a shell at once skips it, and you
+> end up with an app that has no key and no password.
+
+**1. Create the config**
+
 ```bash
-cp .env.example .env                                          # 1. config
-docker compose build                                          # 2. build
-docker compose run --rm pizza-tracker npm run hash-password   # 3. password → .env
-docker compose up -d                                          # 4. start
-docker compose ps                                             # health
-docker compose logs -f pizza-tracker                          # logs
-docker compose build && docker compose up -d                  # update
-docker compose down                                           # stop (data kept)
+cp .env.example .env
+```
+
+**2. Add your Google key** — edit `.env` and set `GOOGLE_MAPS_API_KEY=`.
+
+**3. Build**
+
+```bash
+docker compose build
+```
+
+**4. Generate a password hash**
+
+```bash
+docker compose run --rm pizza-tracker npm run hash-password
+```
+
+**5. Paste the printed `AUTH_PASSWORD_HASH=` line into `.env`.** Nothing works
+until you do; the command only prints it.
+
+**6. Start**
+
+```bash
+docker compose up -d
+```
+
+Then, for everyday use:
+
+```bash
+docker compose ps
+```
+
+```bash
+docker compose logs -f pizza-tracker
+```
+
+```bash
+docker compose build && docker compose up -d --force-recreate
+```
+
+```bash
+docker compose down
 ```
 
 ### What's in the image

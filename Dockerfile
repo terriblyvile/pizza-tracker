@@ -55,6 +55,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:' + (process.env.PORT || 3001) + '/api/auth/session') \
     .then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 
-# --env-file-if-exists lets you bind-mount a .env instead of passing variables,
-# and is a no-op when you don't.
-CMD ["node", "--env-file-if-exists=.env", "server/index.js"]
+# No --env-file here on purpose. .env is deliberately excluded from the image
+# (see .dockerignore) and values arrive as environment variables from compose,
+# so --env-file-if-exists would only ever print Node's ".env not found.
+# Continuing without it." on every boot — which reads like a failure and sends
+# people hunting for a problem that doesn't exist.
+CMD ["node", "server/index.js"]
