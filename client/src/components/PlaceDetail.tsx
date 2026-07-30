@@ -371,7 +371,7 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
                 rel="noreferrer noopener"
               >
                 <MapPinIcon />
-                Open in Apple Maps
+                Apple Maps
               </a>
 
               {draft.website && (
