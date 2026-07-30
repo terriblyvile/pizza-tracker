@@ -30,6 +30,15 @@ export function PhoneIcon() {
   );
 }
 
+export function PencilIcon() {
+  return (
+    <svg {...base}>
+      <path d="M4 20h4L20 8a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+      <path d="M14.5 5.5 18.5 9.5" />
+    </svg>
+  );
+}
+
 export function MapPinIcon() {
   return (
     <svg {...base}>

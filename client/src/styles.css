@@ -1025,6 +1025,58 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+.name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.place-name {
+  font-size: calc(19px * var(--font-scale));
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.name-edit {
+  flex: none;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.name-edit:hover { color: var(--accent); background: var(--surface-2); }
+
+.name-input {
+  font-size: calc(19px * var(--font-scale));
+  font-weight: 700;
+  padding: 6px 9px;
+}
+
+/* Sits to the right of the logo and rating on a wide drawer, and wraps onto
+   its own full-width row when there isn't space. */
+.place-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+@media (max-width: 460px) {
+  .place-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+  .place-actions .btn { flex: 1; }
 }
 
 .google-logo {
@@ -1038,7 +1090,13 @@ textarea { resize: vertical; }
   padding: 6px;
 }
 
-.google-text { min-width: 0; }
+/* flex-basis 0 rather than auto: with `auto`, the name and rating line report
+   their full content width, which overflows the row and pushes the action
+   buttons onto a second line even when there's room to shrink into. */
+.google-text {
+  min-width: 0;
+  flex: 1 1 0;
+}
 
 .google-type {
   margin: 0;
@@ -1052,6 +1110,9 @@ textarea { resize: vertical; }
   font-weight: 600;
   color: var(--gold);
 }
+
+/* Wrap the review count as a whole rather than splitting "2,646 / reviews". */
+.google-rating .small { white-space: nowrap; }
 
 .google-summary {
   margin: 0;
@@ -1365,6 +1426,13 @@ textarea { resize: vertical; }
   gap: 10px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--border);
+}
+
+/* Without the name field the bar is just a status and a close button, so push
+   them to the right and slim it down. */
+.drawer-head-bare {
+  justify-content: flex-end;
+  padding: 8px 10px;
 }
 
 .drawer-title {

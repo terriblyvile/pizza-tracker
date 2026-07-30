@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { api } from '../api';
 import { SUB_SCORES, type Place, type PlaceEdits } from '../types';
 import { appleMapsLink, fileToResizedDataUrl, hostname, subScoreAverage, telLink } from '../utils';
-import { GlobeIcon, MapPinIcon, PhoneIcon } from './Icons';
+import { GlobeIcon, MapPinIcon, PencilIcon, PhoneIcon } from './Icons';
 import { PhotoViewer } from './PhotoViewer';
 import { ScoreSlider } from './ScoreSlider';
 import { StarRating } from './StarRating';
@@ -42,6 +42,7 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
   const [refreshing, setRefreshing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const hasOwnPhotos = place.photos.length > 0;
@@ -52,6 +53,7 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
     setDraft(draftFrom(place));
     setSaveState('idle');
     setConfirmingDelete(false);
+    setEditingName(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [place.id]);
 
@@ -160,35 +162,54 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
     <>
       <div className="scrim" onClick={onClose} />
       <aside className="drawer" aria-label={`Details for ${place.name}`}>
-        <header className="drawer-head">
-          <input
-            className="drawer-title"
-            value={draft.name ?? ''}
-            onChange={(event) => update({ name: event.target.value })}
-            aria-label="Place name"
-          />
-          <div className="drawer-head-actions">
-            <span className={`save-state save-state-${saveState}`}>
-              {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
-            </span>
-            <button className="btn btn-ghost btn-icon" type="button" onClick={onClose} aria-label="Close">
-              ✕
-            </button>
-          </div>
+        {/* The name lives in the block below, where it's also editable, so this
+            bar carries only the save indicator and the close button. */}
+        <header className="drawer-head drawer-head-bare">
+          <span className={`save-state save-state-${saveState}`}>
+            {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved' : ''}
+          </span>
+          <button className="btn btn-ghost btn-icon" type="button" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </header>
 
         <div className="drawer-body">
           {error && <p className="notice notice-error">{error}</p>}
 
           <section className="drawer-section">
-            <h4>From Google</h4>
-
             <div className="google-block">
               {place.logoUrl && (
                 <img className="google-logo" src={place.logoUrl} alt={`${place.name} logo`} />
               )}
+
               <div className="google-text">
-                {place.primaryType && <p className="google-type">{place.primaryType}</p>}
+                {editingName ? (
+                  <input
+                    className="name-input"
+                    value={draft.name ?? ''}
+                    onChange={(event) => update({ name: event.target.value })}
+                    onBlur={() => setEditingName(false)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === 'Escape') setEditingName(false);
+                    }}
+                    aria-label="Place name"
+                    autoFocus
+                  />
+                ) : (
+                  <div className="name-row">
+                    <h3 className="place-name">{draft.name}</h3>
+                    <button
+                      className="name-edit"
+                      type="button"
+                      onClick={() => setEditingName(true)}
+                      aria-label="Edit name"
+                      title="Edit name"
+                    >
+                      <PencilIcon />
+                    </button>
+                  </div>
+                )}
+
                 {place.googleRating !== null ? (
                   <p className="google-rating">
                     ★ {place.googleRating.toFixed(1)}
@@ -198,6 +219,42 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
                   </p>
                 ) : (
                   <p className="muted small">No Google rating yet.</p>
+                )}
+              </div>
+
+              <div className="place-actions">
+                <a
+                  className="btn btn-ghost btn-sm btn-icon-text"
+                  href={appleMapsLink({ ...place, ...draft } as Place)}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  <MapPinIcon />
+                  Maps
+                </a>
+
+                {draft.website && (
+                  <a
+                    className="btn btn-ghost btn-sm btn-icon-text"
+                    href={draft.website}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    title={hostname(draft.website) ?? undefined}
+                  >
+                    <GlobeIcon />
+                    Website
+                  </a>
+                )}
+
+                {telLink(draft.phone ?? null) && (
+                  <a
+                    className="btn btn-ghost btn-sm btn-icon-text"
+                    href={telLink(draft.phone ?? null)!}
+                    title={`Call ${draft.phone}`}
+                  >
+                    <PhoneIcon />
+                    Call
+                  </a>
                 )}
               </div>
             </div>
@@ -378,44 +435,6 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
               </div>
             </div>
 
-            <div className="link-row">
-              <a
-                className="btn btn-ghost btn-sm btn-icon-text"
-                href={appleMapsLink({ ...place, ...draft } as Place)}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                <MapPinIcon />
-                Apple Maps
-              </a>
-
-              {draft.website && (
-                <a
-                  className="btn btn-ghost btn-sm btn-icon-text"
-                  href={draft.website}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  title={hostname(draft.website) ?? undefined}
-                >
-                  <GlobeIcon />
-                  Open
-                </a>
-              )}
-
-              {telLink(draft.phone ?? null) && (
-                <a
-                  className="btn btn-ghost btn-sm btn-icon-text"
-                  href={telLink(draft.phone ?? null)!}
-                  title={`Call ${draft.phone}`}
-                >
-                  <PhoneIcon />
-                  Call
-                </a>
-              )}
-            </div>
-            {place.googleRating !== null && (
-              <p className="muted small">Google rating when added: ★ {place.googleRating.toFixed(1)}</p>
-            )}
           </section>
 
           <section className="drawer-section danger">
