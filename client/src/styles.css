@@ -136,31 +136,33 @@ code {
   padding: 24px 20px calc(96px + env(safe-area-inset-bottom));
 }
 
+/* Kept deliberately shallow — it's a fixed banner on every tab, so every pixel
+   here is one fewer for the list underneath. */
 .app-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding-bottom: 20px;
-  margin-bottom: 20px;
+  gap: 12px;
+  padding-bottom: 10px;
+  margin-bottom: 12px;
   border-bottom: 1px solid var(--border);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .brand-mark {
-  font-size: calc(34px * var(--font-scale));
+  font-size: calc(24px * var(--font-scale));
   line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
 .brand h1 {
-  font-size: calc(22px * var(--font-scale));
+  font-size: calc(18px * var(--font-scale));
   letter-spacing: -0.01em;
 }
 
@@ -857,7 +859,8 @@ textarea { resize: vertical; }
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  /* No margin-bottom: .app-main is a flex column with its own gap, so a margin
+     here would stack on top of it and double the space above the first card. */
 }
 
 .toolbar-search { flex: 1 1 220px; width: auto; }
@@ -1627,8 +1630,12 @@ textarea { resize: vertical; }
 /* ------------------------------------------------------------------ mobile */
 
 @media (max-width: 640px) {
-  .app { padding: 16px 12px calc(92px + env(safe-area-inset-bottom)); }
-  .app-header { gap: 14px; }
+  .app { padding: 12px 12px calc(92px + env(safe-area-inset-bottom)); }
+  .app-header { gap: 10px; }
+
+  /* The tagline is the difference between a one-line and a two-line banner on a
+     phone. Desktop has the room, so it keeps it. */
+  .brand-tagline { display: none; }
   .stats { width: 100%; }
   .stats > div { flex: 1; min-width: 68px; }
   .stats .stat-wide { flex-basis: 100%; max-width: none; }

@@ -40,14 +40,6 @@ export function PlannedTab({ places, onOpen, showSummaryFor }: PlannedTabProps) 
       }
     >
       <div className="planned-head">
-        <div>
-          <h2 className="tab-title">Planned</h2>
-          <p className="muted small">
-            {places.length === 0
-              ? 'Nowhere lined up yet.'
-              : `${places.length} place${places.length === 1 ? '' : 's'} you haven't been to yet.`}
-          </p>
-        </div>
         <button
           className="btn btn-primary"
           type="button"

@@ -52,8 +52,6 @@ export function SettingsTab({ settings, onChange, config, places, onSignOut }: S
 
   return (
     <div className="settings">
-      <h2 className="tab-title">Settings</h2>
-
       <section className="settings-group">
         <h3>Appearance</h3>
 
