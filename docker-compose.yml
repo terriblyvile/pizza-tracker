@@ -19,11 +19,18 @@ services:
     ports:
       - "127.0.0.1:3001:3001"
 
-    # Reads GOOGLE_MAPS_API_KEY and AUTH_PASSWORD_HASH from .env on the host.
-    env_file:
-      - .env
-
     environment:
+      # Read from a .env file sitting beside this compose file. Compose loads
+      # that file automatically for interpolation, and ':-' supplies an empty
+      # default, so a missing .env is not a hard failure — the container starts
+      # and its startup log says which values are unset.
+      #
+      # `env_file:` would be the more obvious way to do this, but it makes the
+      # file mandatory: Compose aborts with "env file not found" before the app
+      # runs at all, which is a confusing first experience.
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      AUTH_PASSWORD_HASH: ${AUTH_PASSWORD_HASH:-}
+
       # Always bind all interfaces inside the container; the ports mapping above
       # is what actually controls exposure.
       HOST: 0.0.0.0

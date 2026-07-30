@@ -271,13 +271,17 @@ running — start Docker Desktop, or `sudo systemctl start docker` on Linux.
 
 ### Step 2 — Create your `.env`
 
-Compose reads secrets from a `.env` file next to `docker-compose.yml`. **It must
-exist before you build** — Compose errors out if a file named in `env_file` is
-missing.
+Compose reads secrets from a `.env` file **next to `docker-compose.yml`**, not
+from whatever directory you're standing in. Create it with a terminal rather
+than a GUI editor — Finder hides file extensions, so a file that looks like
+`.env` may actually be `.env.txt`:
 
 ```bash
-cp .env.example .env
+cd /path/to/pizza-tracker && cp .env.example .env
 ```
+
+`.env` is gitignored, so cloning this repo onto a server never brings one with
+it. Create it on each machine you deploy to.
 
 Open `.env` and set your Google key:
 
@@ -590,9 +594,46 @@ FROM node:25-alpine AS client
 FROM node:25-alpine AS runtime
 ```
 
-#### `env file .env not found`
+`node:24-alpine` (Node 24.18.0) is verified working, so you should not hit this
+unless you've changed the base image.
 
-Compose needs the file to exist even if it's mostly empty. `cp .env.example .env`.
+#### `env file .env not found`, or your key/password aren't reaching the app
+
+Compose reads `.env` from the **project directory** — the folder containing
+`docker-compose.yml` — not from wherever you happen to be standing. Run
+`docker compose` from that folder, or point at it explicitly:
+
+```bash
+docker compose --project-directory /path/to/pizza-tracker up -d
+```
+
+See exactly what Compose resolved, which settles this in one command:
+
+```bash
+docker compose config
+```
+
+If `GOOGLE_MAPS_API_KEY` and `AUTH_PASSWORD_HASH` show empty there, the file
+isn't being read. The usual reasons:
+
+- **You're in the wrong directory.** `ls -a` should list `.env` beside
+  `docker-compose.yml`.
+- **The filename is wrong.** A GUI text editor may have saved `.env.txt` or
+  `.env.rtf` — Finder hides extensions by default, so it looks right. Check with
+  `ls -a`, and prefer `cp .env.example .env` in a terminal.
+- **`.env` isn't in your clone.** It's gitignored on purpose, so cloning the repo
+  onto a server never brings it. Create it there.
+- **A stale container.** Environment changes need
+  `docker compose up -d --force-recreate`, not `restart`.
+
+Confirm what the container actually received:
+
+```bash
+docker compose exec pizza-tracker printenv GOOGLE_MAPS_API_KEY AUTH_PASSWORD_HASH
+```
+
+A missing `.env` no longer aborts the deployment — the app starts, logs which
+values are unset, and shows the setup screen until a password hash is provided.
 
 #### The app shows "No password has been set yet"
 
