@@ -504,11 +504,17 @@ code {
   flex-wrap: wrap;
 }
 
+/* flex-basis 0, not auto: with `auto` a long label reports its full content
+   width, overflows the row and pushes the toggle onto its own line. Shrinking
+   the text so it wraps keeps the control inline where it belongs.
+   Segmented controls still take their own row on mobile — they're width:100%
+   there, so their basis genuinely fills the line. */
 .setting-text {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1 1 0;
 }
 
 .setting-label {
