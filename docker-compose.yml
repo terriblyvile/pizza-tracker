@@ -9,15 +9,17 @@ services:
     container_name: pizza-tracker
     restart: unless-stopped
 
-    # Published on loopback only. Point an HTTPS reverse proxy at 127.0.0.1:3001
-    # rather than exposing this port directly — the app expects TLS to be
-    # terminated in front of it, and only marks its session cookie Secure when
+    # Loopback by default: reachable from the server itself, not from the
+    # network. That's the right default because the app expects TLS to be
+    # terminated in front of it and only marks its session cookie Secure when
     # the request arrives over HTTPS.
     #
-    # To reach it from your LAN instead, change this to "3001:3001" and accept
-    # that traffic is unencrypted.
+    # To reach it from another machine, set BIND_ADDRESS in .env:
+    #   BIND_ADDRESS=0.0.0.0     every interface (unencrypted — trusted LAN only)
+    #   BIND_ADDRESS=192.168.1.5 one specific interface
+    # Prefer an SSH tunnel or a TLS reverse proxy over either. See the README.
     ports:
-      - "127.0.0.1:3001:3001"
+      - "${BIND_ADDRESS:-127.0.0.1}:${HOST_PORT:-3001}:3001"
 
     environment:
       # Read from a .env file sitting beside this compose file. Compose loads

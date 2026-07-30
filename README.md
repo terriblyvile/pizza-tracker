@@ -468,6 +468,56 @@ so use the tarball approach there.
 
 ---
 
+### Reaching it from another machine
+
+By default the container publishes to `127.0.0.1:3001`, so it's reachable from
+the server itself and nothing else. Running Docker on a server and browsing from
+a desktop needs one of the following.
+
+#### Option 1 — SSH tunnel (encrypted, no config change)
+
+Best choice for occasional access, and the only one of these that's encrypted
+without extra setup. On your **desktop**:
+
+```bash
+ssh -N -L 3001:127.0.0.1:3001 root@your-server
+```
+
+Leave that running and open **http://localhost:3001** on the desktop. Traffic
+rides inside SSH, so nothing crosses the network in the clear and the server's
+port stays closed. Nothing on the server changes.
+
+#### Option 2 — publish on the LAN (unencrypted)
+
+Add to `.env` on the server:
+
+```
+BIND_ADDRESS=0.0.0.0
+```
+
+Then:
+
+```bash
+docker compose up -d --force-recreate
+```
+
+Now reach it at `http://your-server-ip:3001`.
+
+Understand the tradeoff: **this is plain HTTP.** Your password is sent in the
+clear on login, and the session cookie isn't marked `Secure` because there's no
+HTTPS. Anyone able to watch traffic on that network can read both. Acceptable on
+a trusted home LAN; not acceptable over anything else, and never on the open
+internet.
+
+If the server has a firewall, open the port — e.g. `ufw allow 3001/tcp`.
+
+#### Option 3 — TLS reverse proxy (the real answer)
+
+For anything beyond occasional LAN use, terminate HTTPS in front of the app and
+leave `BIND_ADDRESS` at its default so only the proxy can reach it. See
+[Putting it on the internet](#putting-it-on-the-internet) below — that also
+covers hostnames and certificates.
+
 ### Putting it on the internet
 
 The compose file publishes to `127.0.0.1:3001` deliberately — reachable from the
