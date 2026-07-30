@@ -149,7 +149,7 @@ export function App() {
           </span>
           <div>
             <h1>Pizza Tracker</h1>
-            <p className="muted small">Every slice, rated and remembered.</p>
+            <p className="muted small brand-tagline">Every slice, rated and remembered.</p>
           </div>
         </div>
       </header>
@@ -165,7 +165,6 @@ export function App() {
 
         {tab === 'search' && (
           <>
-            <h2 className="tab-title">Search</h2>
             <SearchPanel
               config={config}
               onSaved={(place, alreadySaved) => {
@@ -201,15 +200,6 @@ export function App() {
             }
           >
             <div className="planned-head">
-              <div>
-                <h2 className="tab-title">Visited</h2>
-                <p className="muted small">
-                  {visited.length === 0
-                    ? 'No visits recorded.'
-                    : `${visited.length} place${visited.length === 1 ? '' : 's'} you've been to.`}
-                </p>
-              </div>
-
               <dl className="stats">
                 <div>
                   <dt>Rated</dt>
