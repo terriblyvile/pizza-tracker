@@ -4,6 +4,7 @@ import { api } from '../api';
 import { SUB_SCORES, type Place, type PlaceEdits } from '../types';
 import { appleMapsLink, fileToResizedDataUrl, hostname, subScoreAverage, telLink } from '../utils';
 import { GlobeIcon, MapPinIcon, PhoneIcon } from './Icons';
+import { PhotoViewer } from './PhotoViewer';
 import { ScoreSlider } from './ScoreSlider';
 import { StarRating } from './StarRating';
 
@@ -40,7 +41,10 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
   const [uploading, setUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const hasOwnPhotos = place.photos.length > 0;
 
   // Reset the form only when a different place is opened, so in-flight edits
   // aren't overwritten by the refreshed record coming back from a save.
@@ -110,7 +114,15 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
 
   async function removePhoto(photoId: number) {
     try {
-      onUpdated(await api.deletePhoto(photoId));
+      const updated = await api.deletePhoto(photoId);
+      onUpdated(updated);
+      // Keep the viewer on a valid photo, or close it when none are left.
+      setViewerIndex((current) => {
+        if (current === null) return null;
+        const remaining = updated.photos.length;
+        if (remaining === 0) return null;
+        return Math.min(current, remaining - 1);
+      });
     } catch (deleteError) {
       setError(deleteError instanceof Error ? deleteError.message : 'Could not delete that photo.');
     }
@@ -169,18 +181,7 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
           {error && <p className="notice notice-error">{error}</p>}
 
           <section className="drawer-section">
-            <div className="section-head">
-              <h4>From Google</h4>
-              <button
-                className="btn btn-ghost btn-sm"
-                type="button"
-                onClick={refreshFromGoogle}
-                disabled={refreshing}
-                title="Re-pull the synopsis, rating, photo and logo. Overwrites the address, website and phone below with Google's values."
-              >
-                {refreshing ? 'Refreshing…' : 'Refresh'}
-              </button>
-            </div>
+            <h4>From Google</h4>
 
             <div className="google-block">
               {place.logoUrl && (
@@ -214,14 +215,71 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
               </p>
             )}
 
-            {place.coverUrl && (
-              <figure className="google-cover">
-                <img src={place.coverUrl} alt={`${place.name}`} loading="lazy" />
-                {place.coverAttribution && (
-                  <figcaption className="muted small">Photo: {place.coverAttribution}</figcaption>
+            {/* Your own photos replace Google's stock shot entirely once you
+                have any; until then the cover doubles as the add target. */}
+            {hasOwnPhotos ? (
+              <div className="media">
+                <div className="media-grid">
+                  {place.photos.map((photo, position) => (
+                    <button
+                      key={photo.id}
+                      type="button"
+                      className="media-tile"
+                      onClick={() => setViewerIndex(position)}
+                      aria-label={`View photo ${position + 1} of ${place.photos.length}`}
+                    >
+                      <img src={photo.url} alt={photo.caption ?? `Photo of ${place.name}`} loading="lazy" />
+                    </button>
+                  ))}
+
+                  <button
+                    className="media-tile media-add-tile"
+                    type="button"
+                    onClick={() => fileInput.current?.click()}
+                    disabled={uploading}
+                  >
+                    <span aria-hidden="true">＋</span>
+                    <span>{uploading ? 'Uploading…' : 'Add'}</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="media">
+                {place.coverUrl ? (
+                  <figure className="media-cover">
+                    <img src={place.coverUrl} alt="" loading="lazy" />
+                    {place.coverAttribution && (
+                      <figcaption className="muted small">Photo: {place.coverAttribution}</figcaption>
+                    )}
+                  </figure>
+                ) : (
+                  <div className="media-cover media-cover-empty" aria-hidden="true">
+                    🍕
+                  </div>
                 )}
-              </figure>
+
+                <button
+                  className="media-add-overlay"
+                  type="button"
+                  onClick={() => fileInput.current?.click()}
+                  disabled={uploading}
+                >
+                  <span className="media-add-icon" aria-hidden="true">
+                    ＋
+                  </span>
+                  {uploading ? 'Uploading…' : 'Add Photos'}
+                </button>
+              </div>
             )}
+
+            <input
+              ref={fileInput}
+              type="file"
+              accept="image/*"
+              multiple
+              hidden
+              onChange={onPhotosPicked}
+            />
           </section>
 
           <section className="drawer-section">
@@ -288,49 +346,6 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
               value={draft.notes ?? ''}
               onChange={(event) => update({ notes: event.target.value })}
             />
-          </section>
-
-          <section className="drawer-section">
-            <div className="section-head">
-              <h4>Photos</h4>
-              <button
-                className="btn btn-ghost btn-sm"
-                type="button"
-                onClick={() => fileInput.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? 'Uploading…' : 'Add photos'}
-              </button>
-            </div>
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={onPhotosPicked}
-            />
-            {place.photos.length === 0 ? (
-              <p className="muted small">No photos yet.</p>
-            ) : (
-              <div className="photo-grid">
-                {place.photos.map((photo) => (
-                  <figure className="photo" key={photo.id}>
-                    <a href={photo.url} target="_blank" rel="noreferrer noopener">
-                      <img src={photo.url} alt={photo.caption ?? `Photo of ${place.name}`} loading="lazy" />
-                    </a>
-                    <button
-                      className="photo-delete"
-                      type="button"
-                      onClick={() => removePhoto(photo.id)}
-                      aria-label="Delete photo"
-                    >
-                      ✕
-                    </button>
-                  </figure>
-                ))}
-              </div>
-            )}
           </section>
 
           <section className="drawer-section">
@@ -404,6 +419,16 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
           </section>
 
           <section className="drawer-section danger">
+            <button
+              className="btn btn-ghost btn-sm"
+              type="button"
+              onClick={refreshFromGoogle}
+              disabled={refreshing}
+              title="Re-pull the synopsis, rating, photo and logo. Overwrites the address, website and phone above with Google's values."
+            >
+              {refreshing ? 'Refreshing…' : 'Refresh from Google'}
+            </button>
+
             {confirmingDelete ? (
               <div className="confirm">
                 <span>Delete “{place.name}” and its photos?</span>
@@ -426,6 +451,27 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
           </section>
         </div>
       </aside>
+
+      {viewerIndex !== null && place.photos[viewerIndex] && (
+        <PhotoViewer
+          photo={place.photos[viewerIndex]}
+          placeName={place.name}
+          index={viewerIndex}
+          count={place.photos.length}
+          onPrev={() =>
+            setViewerIndex((current) =>
+              current === null ? null : (current - 1 + place.photos.length) % place.photos.length,
+            )
+          }
+          onNext={() =>
+            setViewerIndex((current) =>
+              current === null ? null : (current + 1) % place.photos.length,
+            )
+          }
+          onDelete={removePhoto}
+          onClose={() => setViewerIndex(null)}
+        />
+      )}
     </>
   );
 }
