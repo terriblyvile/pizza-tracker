@@ -8,10 +8,10 @@ export type RatedFilter = 'all' | 'rated' | 'unrated';
 export type ReturnFilter = 'any' | 'yes' | 'no';
 
 const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'recent', label: 'Recently added' },
-  { key: 'rating', label: 'Highest rated' },
-  { key: 'visit', label: 'Most recent visit' },
-  { key: 'name', label: 'Name (A–Z)' },
+  { key: 'recent', label: 'Newest' },
+  { key: 'rating', label: 'Top rated' },
+  { key: 'visit', label: 'Recent visit' },
+  { key: 'name', label: 'A–Z' },
 ];
 
 const RATED_FILTERS: { key: RatedFilter; label: string }[] = [
@@ -33,6 +33,11 @@ interface PlaceListProps {
   showSummaryFor: (place: Place) => boolean;
   /** Rating and verdict filters only make sense on the Visited tab. */
   showRatingFilters?: boolean;
+  /**
+   * Which rating "Top rated" orders by. Planned places have no rating of your
+   * own yet, so there it sorts on Google's instead.
+   */
+  ratingSource?: 'yours' | 'google';
   defaultSort?: SortKey;
   emptyState: ReactNode;
   /** Rendered above the toolbar — used for the Planned tab's random pick. */
@@ -44,6 +49,7 @@ export function PlaceList({
   onOpen,
   showSummaryFor,
   showRatingFilters = false,
+  ratingSource = 'yours',
   defaultSort = 'recent',
   emptyState,
   children,
@@ -73,9 +79,12 @@ export function PlaceList({
     const sorted = [...matches];
     sorted.sort((a, b) => {
       switch (sort) {
-        case 'rating':
+        case 'rating': {
+          const score = (place: Place) =>
+            (ratingSource === 'google' ? place.googleRating : place.rating) ?? -1;
           // Unrated places sink to the bottom rather than sorting as zero.
-          return (b.rating ?? -1) - (a.rating ?? -1) || a.name.localeCompare(b.name);
+          return score(b) - score(a) || a.name.localeCompare(b.name);
+        }
         case 'name':
           return a.name.localeCompare(b.name);
         case 'visit':
@@ -85,7 +94,7 @@ export function PlaceList({
       }
     });
     return sorted;
-  }, [places, filterText, sort, ratedFilter, returnFilter, showRatingFilters]);
+  }, [places, filterText, sort, ratedFilter, returnFilter, showRatingFilters, ratingSource]);
 
   if (places.length === 0) return <>{children}{emptyState}</>;
 
@@ -97,7 +106,7 @@ export function PlaceList({
         <input
           className="toolbar-search"
           type="search"
-          placeholder="Filter these places…"
+          placeholder="Search Restaurants…"
           value={filterText}
           onChange={(event) => setFilterText(event.target.value)}
           aria-label="Filter places"

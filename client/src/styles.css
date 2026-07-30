@@ -863,8 +863,22 @@ textarea { resize: vertical; }
      here would stack on top of it and double the space above the first card. */
 }
 
-.toolbar-search { flex: 1 1 220px; width: auto; }
-.sort select { width: auto; }
+/* The search field takes a row of its own; every filter shares the next one,
+   splitting it evenly so they stay on a single line even on a narrow phone. */
+.toolbar-search { flex: 1 1 100%; width: auto; }
+
+.sort {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.sort select {
+  width: 100%;
+  /* Shrink the horizontal padding so the label keeps as much room as possible
+     once three of these share 351px. */
+  padding-left: 8px;
+  padding-right: 4px;
+}
 
 /* ------------------------------------------------------------------- cards */
 
@@ -1642,7 +1656,6 @@ textarea { resize: vertical; }
   .panel { padding: 14px; }
   .drawer { width: 100%; }
   .grid { grid-template-columns: 1fr; }
-  .toolbar-search { flex-basis: 100%; }
 
   .planned-head { align-items: flex-start; }
   .planned-head .btn { width: 100%; }

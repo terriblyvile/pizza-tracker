@@ -29,6 +29,9 @@ export function PlannedTab({ places, onOpen, showSummaryFor }: PlannedTabProps) 
       places={places}
       onOpen={onOpen}
       showSummaryFor={showSummaryFor}
+      // Nothing here has a rating of your own yet, so "Top rated" ranks on
+      // Google's rating instead.
+      ratingSource="google"
       defaultSort="recent"
       emptyState={
         <div className="empty">
