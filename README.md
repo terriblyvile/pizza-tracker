@@ -594,6 +594,9 @@ FROM node:25-alpine AS client
 FROM node:25-alpine AS runtime
 ```
 
+`node:24-alpine` (Node 24.18.0) is verified working, so you should not hit this
+unless you've changed the base image.
+
 #### `env file .env not found`, or your key/password aren't reaching the app
 
 Compose reads `.env` from the **project directory** — the folder containing
