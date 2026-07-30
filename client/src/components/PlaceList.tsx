@@ -29,7 +29,8 @@ const RETURN_FILTERS: { key: ReturnFilter; label: string }[] = [
 interface PlaceListProps {
   places: Place[];
   onOpen: (placeId: number) => void;
-  showSummaries: boolean;
+  /** Decides per place whether its Google synopsis appears on the card. */
+  showSummaryFor: (place: Place) => boolean;
   /** Rating and verdict filters only make sense on the Visited tab. */
   showRatingFilters?: boolean;
   defaultSort?: SortKey;
@@ -41,7 +42,7 @@ interface PlaceListProps {
 export function PlaceList({
   places,
   onOpen,
-  showSummaries,
+  showSummaryFor,
   showRatingFilters = false,
   defaultSort = 'recent',
   emptyState,
@@ -154,7 +155,7 @@ export function PlaceList({
             <PlaceCard
               key={place.id}
               place={place}
-              showSummary={showSummaries}
+              showSummary={showSummaryFor(place)}
               onOpen={() => onOpen(place.id)}
             />
           ))}

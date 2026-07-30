@@ -2,7 +2,8 @@ import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 
 import { api } from '../api';
 import { SUB_SCORES, type Place, type PlaceEdits } from '../types';
-import { fileToResizedDataUrl, hostname, mapsLink, subScoreAverage } from '../utils';
+import { appleMapsLink, fileToResizedDataUrl, hostname, subScoreAverage, telLink } from '../utils';
+import { GlobeIcon, MapPinIcon, PhoneIcon } from './Icons';
 import { ScoreSlider } from './ScoreSlider';
 import { StarRating } from './StarRating';
 
@@ -244,7 +245,9 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
 
           <section className="drawer-section">
             <h4>Visit</h4>
-            <div className="row">
+            {/* Stacked, not a .row: the segmented control has a wide intrinsic
+                minimum and would overlap the date field on a narrow screen. */}
+            <div className="stack">
               <div className="field">
                 <label htmlFor="visit-date">Date visited</label>
                 <input
@@ -256,7 +259,7 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
               </div>
               <div className="field">
                 <label id="would-return-label">Would return?</label>
-                <div className="segmented" role="group" aria-labelledby="would-return-label">
+                <div className="segmented segmented-fill" role="group" aria-labelledby="would-return-label">
                   {[
                     { label: 'Yes', value: true },
                     { label: 'No', value: false },
@@ -361,12 +364,37 @@ export function PlaceDetail({ place, onUpdated, onDeleted, onClose }: PlaceDetai
             </div>
 
             <div className="link-row">
-              <a className="btn btn-ghost btn-sm" href={mapsLink(place)} target="_blank" rel="noreferrer noopener">
-                Open in Google Maps
+              <a
+                className="btn btn-ghost btn-sm btn-icon-text"
+                href={appleMapsLink({ ...place, ...draft } as Place)}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                <MapPinIcon />
+                Open in Apple Maps
               </a>
+
               {draft.website && (
-                <a className="btn btn-ghost btn-sm" href={draft.website} target="_blank" rel="noreferrer noopener">
-                  {hostname(draft.website)}
+                <a
+                  className="btn btn-ghost btn-sm btn-icon-text"
+                  href={draft.website}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  title={hostname(draft.website) ?? undefined}
+                >
+                  <GlobeIcon />
+                  Open
+                </a>
+              )}
+
+              {telLink(draft.phone ?? null) && (
+                <a
+                  className="btn btn-ghost btn-sm btn-icon-text"
+                  href={telLink(draft.phone ?? null)!}
+                  title={`Call ${draft.phone}`}
+                >
+                  <PhoneIcon />
+                  Call
                 </a>
               )}
             </div>

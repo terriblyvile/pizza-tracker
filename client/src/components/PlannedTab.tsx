@@ -1,16 +1,16 @@
 import { useState } from 'react';
 
 import type { Place } from '../types';
-import { hostname, mapsLink, priceLabel } from '../utils';
+import { appleMapsLink, hostname, priceLabel } from '../utils';
 import { PlaceList } from './PlaceList';
 
 interface PlannedTabProps {
   places: Place[];
   onOpen: (placeId: number) => void;
-  showSummaries: boolean;
+  showSummaryFor: (place: Place) => boolean;
 }
 
-export function PlannedTab({ places, onOpen, showSummaries }: PlannedTabProps) {
+export function PlannedTab({ places, onOpen, showSummaryFor }: PlannedTabProps) {
   const [pick, setPick] = useState<Place | null>(null);
 
   function pickRandom() {
@@ -28,7 +28,7 @@ export function PlannedTab({ places, onOpen, showSummaries }: PlannedTabProps) {
     <PlaceList
       places={places}
       onOpen={onOpen}
-      showSummaries={showSummaries}
+      showSummaryFor={showSummaryFor}
       defaultSort="recent"
       emptyState={
         <div className="empty">
@@ -87,7 +87,7 @@ export function PlannedTab({ places, onOpen, showSummaries }: PlannedTabProps) {
               </button>
               <a
                 className="btn btn-ghost btn-sm"
-                href={mapsLink(suggestion)}
+                href={appleMapsLink(suggestion)}
                 target="_blank"
                 rel="noreferrer noopener"
               >

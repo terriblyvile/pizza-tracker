@@ -113,6 +113,25 @@ export function SettingsTab({ settings, onChange, config, places, onSignOut }: S
 
         <div className="setting">
           <div className="setting-text">
+            <span className="setting-label">Hide synopsis once I've written a note</span>
+            <span className="muted small">
+              Your own words replace Google's blurb on the card.
+            </span>
+          </div>
+          <label className="switch">
+            <input
+              type="checkbox"
+              checked={settings.hideSummaryWhenNoted}
+              disabled={!settings.showSummaries}
+              onChange={(event) => onChange({ hideSummaryWhenNoted: event.target.checked })}
+            />
+            <span className="switch-track" aria-hidden="true" />
+            <span className="visually-hidden">Hide synopsis once I've written a note</span>
+          </label>
+        </div>
+
+        <div className="setting">
+          <div className="setting-text">
             <span className="setting-label">Opening tab</span>
             <span className="muted small">Where the app starts when you load it.</span>
           </div>
