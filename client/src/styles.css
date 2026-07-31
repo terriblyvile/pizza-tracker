@@ -82,6 +82,13 @@ html,
 body {
   overflow-x: hidden;
   max-width: 100%;
+  /* Setting overflow here makes the root the scroll container, and WebKit then
+     pins `position: fixed` children to the root's box rather than to the
+     screen. On a page shorter than the viewport — Search, or Visited with only
+     a few entries — that box is short, so the tab bar rides up off the bottom
+     edge and leaves a strip of background beneath it. Holding the root at full
+     height keeps the bottom of the box on the bottom of the screen. */
+  min-height: 100dvh;
 }
 
 body {
