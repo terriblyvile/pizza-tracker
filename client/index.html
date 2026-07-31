@@ -1,5 +1,10 @@
 <!doctype html>
-<html lang="en">
+<!--
+  data-palette carries the default so the stylesheet has colors to work with
+  before main.tsx runs and replaces it with the saved one. Without it the very
+  first paint has every color variable undefined.
+-->
+<html lang="en" data-palette="tomato">
   <head>
     <meta charset="UTF-8" />
     <!--
@@ -17,7 +22,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Pizza Tracker" />
-    <meta name="theme-color" content="#c4462b" />
+    <!-- Rewritten to the chosen theme's background by applySettings; this is
+         just the default, so the browser chrome doesn't flash a stale tint. -->
+    <meta name="theme-color" content="#faf6f0" />
     <title>Pizza Tracker</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />

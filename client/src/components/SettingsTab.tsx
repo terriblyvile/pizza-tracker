@@ -1,7 +1,13 @@
 import { useState } from 'react';
 
 import { api } from '../api';
-import { DEFAULT_SETTINGS, type Settings, type TextSizeSetting, type ThemeSetting } from '../settings';
+import {
+  DEFAULT_SETTINGS,
+  PALETTES,
+  type Settings,
+  type TextSizeSetting,
+  type ThemeSetting,
+} from '../settings';
 import type { AppConfig, Place } from '../types';
 
 interface SettingsTabProps {
@@ -57,10 +63,10 @@ export function SettingsTab({ settings, onChange, config, places, onSignOut }: S
 
         <div className="setting">
           <div className="setting-text">
-            <span className="setting-label">Theme</span>
+            <span className="setting-label">Appearance</span>
             <span className="muted small">System follows your device's light/dark setting.</span>
           </div>
-          <div className="segmented" role="group" aria-label="Theme">
+          <div className="segmented" role="group" aria-label="Appearance">
             {THEMES.map((option) => (
               <button
                 key={option.key}
@@ -69,6 +75,35 @@ export function SettingsTab({ settings, onChange, config, places, onSignOut }: S
                 onClick={() => onChange({ theme: option.key })}
               >
                 {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="setting setting-stack">
+          <div className="setting-text">
+            <span className="setting-label">Theme</span>
+            <span className="muted small">
+              Every theme has a light and a dark version — the swatches show the one you're in.
+            </span>
+          </div>
+          <div className="palette-grid" role="group" aria-label="Theme">
+            {PALETTES.map((option) => (
+              <button
+                key={option.key}
+                type="button"
+                // Its own palette, not the one in use, so the swatch previews itself.
+                data-palette={option.key}
+                className={`palette-swatch${settings.palette === option.key ? ' active' : ''}`}
+                aria-pressed={settings.palette === option.key}
+                onClick={() => onChange({ palette: option.key })}
+              >
+                <span className="palette-dots" aria-hidden="true">
+                  <span className="palette-dot-accent" />
+                  <span className="palette-dot-surface" />
+                  <span className="palette-dot-gold" />
+                </span>
+                <span className="palette-name">{option.label}</span>
               </button>
             ))}
           </div>

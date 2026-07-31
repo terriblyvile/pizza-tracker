@@ -1,8 +1,24 @@
 export type ThemeSetting = 'system' | 'light' | 'dark';
+export type PaletteSetting = 'tomato' | 'basil' | 'honey' | 'truffle' | 'anchovy' | 'charcoal';
 export type TextSizeSetting = 'small' | 'default' | 'large' | 'larger';
+
+/**
+ * Every palette is written out twice in styles.css, under
+ * `[data-palette='<key>']` — once light, once dark — so the light/dark setting
+ * stays independent of which colors are in use.
+ */
+export const PALETTES: { key: PaletteSetting; label: string }[] = [
+  { key: 'tomato', label: 'Tomato' },
+  { key: 'basil', label: 'Basil' },
+  { key: 'honey', label: 'Honey' },
+  { key: 'truffle', label: 'Truffle' },
+  { key: 'anchovy', label: 'Anchovy' },
+  { key: 'charcoal', label: 'Charcoal' },
+];
 
 export interface Settings {
   theme: ThemeSetting;
+  palette: PaletteSetting;
   textSize: TextSizeSetting;
   /** Show the Google synopsis on cards. Off gives a denser list. */
   showSummaries: boolean;
@@ -14,6 +30,7 @@ export interface Settings {
 
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  palette: 'tomato',
   textSize: 'default',
   showSummaries: true,
   hideSummaryWhenNoted: true,
@@ -55,8 +72,9 @@ export function saveSettings(settings: Settings): void {
 }
 
 /**
- * Pushes settings into the document. Theme is an attribute the stylesheet keys
- * off; text size is a multiplier every font-size is expressed against.
+ * Pushes settings into the document. Theme and palette are attributes the
+ * stylesheet keys off; text size is a multiplier every font-size is expressed
+ * against.
  */
 export function applySettings(settings: Settings): void {
   const root = document.documentElement;
@@ -64,5 +82,18 @@ export function applySettings(settings: Settings): void {
   if (settings.theme === 'system') root.removeAttribute('data-theme');
   else root.setAttribute('data-theme', settings.theme);
 
+  // An unknown palette — saved by a newer build, or hand-edited into local
+  // storage — would leave every color variable undefined and the page unpainted.
+  const palette = PALETTES.some((option) => option.key === settings.palette)
+    ? settings.palette
+    : DEFAULT_SETTINGS.palette;
+  root.setAttribute('data-palette', palette);
+
   root.style.setProperty('--font-scale', String(TEXT_SCALES[settings.textSize]));
+
+  // Browser chrome tints itself with this — Android's status bar, Safari's
+  // toolbar. Left at a fixed color it clashes with five palettes out of six.
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  const background = getComputedStyle(root).getPropertyValue('--bg').trim();
+  if (themeColor && background) themeColor.setAttribute('content', background);
 }

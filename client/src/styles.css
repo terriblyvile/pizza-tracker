@@ -1,26 +1,41 @@
 /*
- * Theme resolution, in order:
- *   1. light values below are the base
- *   2. dark applies when the OS asks for it, unless Settings forced light
- *   3. Settings forcing dark wins outright
+ * Color resolution, in order:
+ *   1. the palette named by data-palette supplies a light and a dark set
+ *   2. its light set is what everything is painted with by default
+ *   3. the dark set takes over when the OS asks for dark, unless Settings
+ *      forced light
+ *   4. Settings forcing dark wins outright
  *
- * The dark values are written twice rather than via light-dark(), which isn't
- * safe to rely on across every phone browser this might be opened in.
+ * A palette declares `--p-<token>` for light and `--p-<token>-dark` for dark;
+ * the two swap blocks below are the only place that choice is made, so adding a
+ * palette means adding exactly one block. The dark values are spelled out
+ * rather than derived through light-dark(), which isn't safe to rely on across
+ * every phone browser this might be opened in.
+ *
+ * The palette selectors match *any* element carrying data-palette, not just
+ * :root. That's what lets a swatch in Settings paint itself in a palette the
+ * app isn't wearing — and in whichever of the two modes is currently live.
  */
 :root {
-  --bg: #faf6f0;
-  --surface: #ffffff;
-  --surface-2: #f4ece2;
-  --border: #e6dacb;
-  --text: #26201b;
-  --muted: #7b6d5e;
-  --accent: #c4462b;
-  --accent-soft: #fbe9e4;
-  --gold: #e0a323;
-  --good: #2f7d55;
-  --good-soft: #e3f2e9;
-  --bad: #a33f3f;
-  --bad-soft: #f8e6e6;
+  --bg: var(--p-bg);
+  --surface: var(--p-surface);
+  --surface-2: var(--p-surface-2);
+  --border: var(--p-border);
+  --text: var(--p-text);
+  --muted: var(--p-muted);
+  --accent: var(--p-accent);
+  --accent-soft: var(--p-accent-soft);
+  --gold: var(--p-gold);
+  --good: var(--p-good);
+  --good-soft: var(--p-good-soft);
+  --bad: var(--p-bad);
+  --bad-soft: var(--p-bad-soft);
+
+  /* Label color for text sitting on a filled --accent or --bad: white unless
+     the palette is bright enough there to need a dark one instead. */
+  --on-accent: var(--p-on-accent, #fff);
+  --on-bad: var(--p-on-bad, #fff);
+
   --shadow: 0 1px 2px rgba(38, 32, 27, 0.06), 0 8px 24px rgba(38, 32, 27, 0.07);
   --radius: 12px;
 
@@ -31,46 +46,258 @@
 }
 
 @media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']),
+  :root:not([data-theme='light']) [data-palette] {
+    --p-bg: var(--p-bg-dark);
+    --p-surface: var(--p-surface-dark);
+    --p-surface-2: var(--p-surface-2-dark);
+    --p-border: var(--p-border-dark);
+    --p-text: var(--p-text-dark);
+    --p-muted: var(--p-muted-dark);
+    --p-accent: var(--p-accent-dark);
+    --p-accent-soft: var(--p-accent-soft-dark);
+    --p-on-accent: var(--p-on-accent-dark, #fff);
+    --p-gold: var(--p-gold-dark);
+    --p-good: var(--p-good-dark);
+    --p-good-soft: var(--p-good-soft-dark);
+    --p-bad: var(--p-bad-dark);
+    --p-bad-soft: var(--p-bad-soft-dark);
+    --p-on-bad: var(--p-on-bad-dark, #fff);
+  }
+
   :root:not([data-theme='light']) {
-    --bg: #16130f;
-    --surface: #201c17;
-    --surface-2: #2a241d;
-    --border: #382f26;
-    --text: #f2ebe2;
-    --muted: #a4968a;
-    --accent: #ef7150;
-    --accent-soft: #3a221b;
-    --gold: #f0b93f;
-    --good: #6ec895;
-    --good-soft: #1e3628;
-    --bad: #e58686;
-    --bad-soft: #3a2222;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
 
     color-scheme: dark;
   }
 }
 
+:root[data-theme='dark'],
+:root[data-theme='dark'] [data-palette] {
+  --p-bg: var(--p-bg-dark);
+  --p-surface: var(--p-surface-dark);
+  --p-surface-2: var(--p-surface-2-dark);
+  --p-border: var(--p-border-dark);
+  --p-text: var(--p-text-dark);
+  --p-muted: var(--p-muted-dark);
+  --p-accent: var(--p-accent-dark);
+  --p-accent-soft: var(--p-accent-soft-dark);
+  --p-on-accent: var(--p-on-accent-dark, #fff);
+  --p-gold: var(--p-gold-dark);
+  --p-good: var(--p-good-dark);
+  --p-good-soft: var(--p-good-soft-dark);
+  --p-bad: var(--p-bad-dark);
+  --p-bad-soft: var(--p-bad-soft-dark);
+  --p-on-bad: var(--p-on-bad-dark, #fff);
+}
+
 :root[data-theme='dark'] {
-  --bg: #16130f;
-  --surface: #201c17;
-  --surface-2: #2a241d;
-  --border: #382f26;
-  --text: #f2ebe2;
-  --muted: #a4968a;
-  --accent: #ef7150;
-  --accent-soft: #3a221b;
-  --gold: #f0b93f;
-  --good: #6ec895;
-  --good-soft: #1e3628;
-  --bad: #e58686;
-  --bad-soft: #3a2222;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
 
   color-scheme: dark;
 }
 
 :root[data-theme='light'] { color-scheme: light; }
+
+/* --------------------------------------------------------------- palettes */
+
+/* The original: warm red on cream. Also the fallback if data-palette never
+   gets set, which would otherwise leave the page with no colors at all. */
+[data-palette='tomato'],
+:root:not([data-palette]) {
+  --p-bg: #faf6f0;
+  --p-surface: #ffffff;
+  --p-surface-2: #f4ece2;
+  --p-border: #e6dacb;
+  --p-text: #26201b;
+  --p-muted: #7b6d5e;
+  --p-accent: #c4462b;
+  --p-accent-soft: #fbe9e4;
+  --p-gold: #e0a323;
+  --p-good: #2f7d55;
+  --p-good-soft: #e3f2e9;
+  --p-bad: #a33f3f;
+  --p-bad-soft: #f8e6e6;
+
+  --p-bg-dark: #16130f;
+  --p-surface-dark: #201c17;
+  --p-surface-2-dark: #2a241d;
+  --p-border-dark: #382f26;
+  --p-text-dark: #f2ebe2;
+  --p-muted-dark: #a4968a;
+  --p-accent-dark: #ef7150;
+  --p-accent-soft-dark: #3a221b;
+  --p-gold-dark: #f0b93f;
+  --p-good-dark: #6ec895;
+  --p-good-soft-dark: #1e3628;
+  --p-bad-dark: #e58686;
+  --p-bad-soft-dark: #3a2222;
+}
+
+/* Garden green on a cool paper white. */
+[data-palette='basil'] {
+  --p-bg: #f4f8f1;
+  --p-surface: #ffffff;
+  --p-surface-2: #e8f1e3;
+  --p-border: #d4e3ca;
+  --p-text: #1c2718;
+  --p-muted: #5d7056;
+  --p-accent: #37703c;
+  --p-accent-soft: #e2f1e2;
+  --p-gold: #a67c11;
+  --p-good: #1b6e51;
+  --p-good-soft: #e3f3ec;
+  --p-bad: #a8433a;
+  --p-bad-soft: #f8e7e4;
+
+  --p-bg-dark: #0f140d;
+  --p-surface-dark: #171f15;
+  --p-surface-2-dark: #1f2a1c;
+  --p-border-dark: #2c3a28;
+  --p-text-dark: #e8f0e4;
+  --p-muted-dark: #94a68d;
+  --p-accent-dark: #7fd08a;
+  --p-accent-soft-dark: #16291a;
+  --p-on-accent-dark: #0d1a0f;
+  --p-gold-dark: #e7bf4e;
+  --p-good-dark: #6ec8a8;
+  --p-good-soft-dark: #16302a;
+  --p-bad-dark: #e58686;
+  --p-bad-soft-dark: #33211f;
+  --p-on-bad-dark: #2a1210;
+}
+
+/* Burnt amber on ivory — the warmest of the six. */
+[data-palette='honey'] {
+  --p-bg: #fdf8ea;
+  --p-surface: #fffdf6;
+  --p-surface-2: #f7edd6;
+  --p-border: #e9d9b4;
+  --p-text: #2a2313;
+  --p-muted: #786644;
+  --p-accent: #b35a12;
+  --p-accent-soft: #fbe8d2;
+  --p-gold: #a87d10;
+  --p-good: #43702a;
+  --p-good-soft: #eff6e6;
+  --p-bad: #a8443a;
+  --p-bad-soft: #f9e7e3;
+
+  --p-bg-dark: #16110a;
+  --p-surface-dark: #201a10;
+  --p-surface-2-dark: #2b2317;
+  --p-border-dark: #3a3021;
+  --p-text-dark: #f4ecdc;
+  --p-muted-dark: #a99277;
+  --p-accent-dark: #f2b44e;
+  --p-accent-soft-dark: #35260f;
+  --p-on-accent-dark: #241802;
+  --p-gold-dark: #f6cf6a;
+  --p-good-dark: #7cc873;
+  --p-good-soft-dark: #1f3020;
+  --p-bad-dark: #e58686;
+  --p-bad-soft-dark: #362020;
+  --p-on-bad-dark: #2a1210;
+}
+
+/* Plum on a faintly violet grey. */
+[data-palette='truffle'] {
+  --p-bg: #f8f6fa;
+  --p-surface: #ffffff;
+  --p-surface-2: #eee9f3;
+  --p-border: #ded6e7;
+  --p-text: #231e29;
+  --p-muted: #685f75;
+  --p-accent: #77399f;
+  --p-accent-soft: #f0e6f8;
+  --p-gold: #a87d10;
+  --p-good: #29704c;
+  --p-good-soft: #e8f4ee;
+  --p-bad: #a8404f;
+  --p-bad-soft: #f9e6e9;
+
+  --p-bg-dark: #121019;
+  --p-surface-dark: #1c1826;
+  --p-surface-2-dark: #251f31;
+  --p-border-dark: #342c42;
+  --p-text-dark: #ece7f3;
+  --p-muted-dark: #a096ae;
+  --p-accent-dark: #c093f0;
+  --p-accent-soft-dark: #2a1e3c;
+  --p-on-accent-dark: #1a0f26;
+  --p-gold-dark: #e8bb4d;
+  --p-good-dark: #6ec895;
+  --p-good-soft-dark: #1d3529;
+  --p-bad-dark: #e88898;
+  --p-bad-soft-dark: #34202a;
+  --p-on-bad-dark: #2a1017;
+}
+
+/* Deep sea blue, the only cool-neutral one. */
+[data-palette='anchovy'] {
+  --p-bg: #f4f6fb;
+  --p-surface: #ffffff;
+  --p-surface-2: #e9eef7;
+  --p-border: #d4dcec;
+  --p-text: #1a2030;
+  --p-muted: #5c6780;
+  --p-accent: #2f56c4;
+  --p-accent-soft: #e4eafb;
+  --p-gold: #a87d10;
+  --p-good: #1b6e51;
+  --p-good-soft: #e3f3ec;
+  --p-bad: #b0394a;
+  --p-bad-soft: #f9e5e8;
+
+  --p-bg-dark: #0d1017;
+  --p-surface-dark: #161a25;
+  --p-surface-2-dark: #1e2330;
+  --p-border-dark: #2b3140;
+  --p-text-dark: #e5eaf5;
+  --p-muted-dark: #909bb2;
+  --p-accent-dark: #7ea6ff;
+  --p-accent-soft-dark: #172038;
+  --p-on-accent-dark: #0b1220;
+  --p-gold-dark: #e8bb4d;
+  --p-good-dark: #63c5a2;
+  --p-good-soft-dark: #14302a;
+  --p-bad-dark: #ee8b98;
+  --p-bad-soft-dark: #33202a;
+  --p-on-bad-dark: #2a1017;
+}
+
+/* Near-monochrome. The stars stay gold — nothing else has a hue. */
+[data-palette='charcoal'] {
+  --p-bg: #f4f4f3;
+  --p-surface: #ffffff;
+  --p-surface-2: #ebebe9;
+  --p-border: #dbdbd7;
+  --p-text: #1b1b19;
+  --p-muted: #66665f;
+  --p-accent: #3d3d3a;
+  --p-accent-soft: #e5e5e2;
+  --p-gold: #9a7412;
+  --p-good: #366e46;
+  --p-good-soft: #eaf2ec;
+  --p-bad: #9c3f3f;
+  --p-bad-soft: #f4e6e6;
+
+  --p-bg-dark: #0f0f0e;
+  --p-surface-dark: #181817;
+  --p-surface-2-dark: #212120;
+  --p-border-dark: #2f2f2c;
+  --p-text-dark: #ececea;
+  --p-muted-dark: #9a9a93;
+  --p-accent-dark: #dcdcd6;
+  --p-accent-soft-dark: #262624;
+  --p-on-accent-dark: #161614;
+  --p-gold-dark: #e0bb63;
+  --p-good-dark: #74c493;
+  --p-good-soft-dark: #1d2f24;
+  --p-bad-dark: #e08585;
+  --p-bad-soft-dark: #33201f;
+  --p-on-bad-dark: #241010;
+}
 
 * {
   box-sizing: border-box;
@@ -386,7 +613,7 @@ code {
 
 .tab-active .tab-count {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* -------------------------------------------------------- planned + picks */
@@ -566,6 +793,73 @@ code {
 .settings-group > p { margin: 0; }
 .settings-reset { align-self: flex-start; }
 
+/* For a control too wide to sit beside its label. The wrap .setting sets for
+   its row layout has to go: a wrapping *column* flex box fills the height it's
+   given and spills into a second column, which here stretched one row of
+   swatches to the height of the whole settings card. */
+/* Doubled up on purpose: the mobile block later on sets `.setting` to
+   flex-start, which would otherwise shrink the control to its content. */
+.setting.setting-stack {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 10px;
+}
+
+/* Palette picker */
+
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 8px;
+}
+
+/* Painted in the palette it offers rather than the one in use: every --p-*
+   here resolves against the swatch's own data-palette, and follows the current
+   light/dark mode with it. */
+.palette-swatch {
+  font: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 11px;
+  border-radius: 10px;
+  text-align: left;
+  background: var(--p-bg);
+  border: 1px solid var(--p-border);
+  color: var(--p-text);
+}
+
+.palette-swatch.active {
+  border-color: var(--p-accent);
+  /* Not box-shadow: the focus ring uses that, and a selected swatch that also
+     has focus needs to show both. */
+  outline: 2px solid var(--p-accent);
+  outline-offset: -2px;
+}
+
+.palette-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.palette-dots span {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1px solid var(--p-border);
+}
+
+.palette-dot-accent { background: var(--p-accent); }
+.palette-dot-surface { background: var(--p-surface); }
+.palette-dot-gold { background: var(--p-gold); }
+
+.palette-name {
+  font-size: calc(13px * var(--font-scale));
+  font-weight: 600;
+}
+
 /* Toggle switch */
 .switch {
   position: relative;
@@ -606,7 +900,13 @@ code {
 }
 
 .switch input:checked + .switch-track { background: var(--accent); }
-.switch input:checked + .switch-track::after { transform: translateX(19px); }
+
+/* The knob is white against the grey off-state track, but a palette with a
+   bright accent would swallow it once switched on. */
+.switch input:checked + .switch-track::after {
+  transform: translateX(19px);
+  background: var(--on-accent);
+}
 
 .switch input:focus-visible + .switch-track {
   box-shadow: 0 0 0 3px var(--accent-soft);
@@ -752,7 +1052,7 @@ textarea { resize: vertical; }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn-ghost { background: transparent; }
@@ -760,7 +1060,7 @@ textarea { resize: vertical; }
 .btn-danger {
   background: var(--bad);
   border-color: var(--bad);
-  color: #fff;
+  color: var(--on-bad);
 }
 
 .btn-sm { padding: 6px 12px; font-size: calc(13px * var(--font-scale)); }
@@ -811,7 +1111,7 @@ textarea { resize: vertical; }
 
 .segmented button.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 
